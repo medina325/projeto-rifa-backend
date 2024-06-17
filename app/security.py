@@ -25,13 +25,8 @@ unauthorized_redirect = RedirectResponse(
 
 def get_authorized_redirect(bearer_token: str):
     response = RedirectResponse(
-        'http://localhost:5173',
+        f'http://localhost:5173?token={bearer_token}',
         headers={'Content-Type': 'text/html; charset=utf-8'}
-    )
-    response.set_cookie(
-        key='Authorization',
-        value=f'Bearer {bearer_token}',
-        httponly=True
     )
     return response
 
