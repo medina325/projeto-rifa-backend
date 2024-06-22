@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from app.routes import oauth2
+from app.routers import oauth2, users
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 app.include_router(oauth2.router, prefix='/oauth', tags=['oauth'])
+app.include_router(users.router, prefix='/users', tags=['users'])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['http://localhost:5173'],
