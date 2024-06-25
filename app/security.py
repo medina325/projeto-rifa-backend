@@ -1,7 +1,7 @@
 import jwt
 import datetime
 from datetime import datetime as datetime_m, timedelta
-from .config import SECRET_KEY
+from app.config import SECRET_KEY
 from sqlalchemy.orm import Session
 from app.models import RevokedToken, User
 from app.schemas import TokenData
@@ -69,8 +69,8 @@ def is_token_not_revoked(db: Session, token: str) -> bool:
     )
     return revoked_token is None
 
-def is_token_valid(db: Session, token: str) -> bool:
+def is_token_valid(token: str, db: Session) -> bool:
     try:
         return is_token_not_expired(token) and is_token_not_revoked(db, token)
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise credentials_exception

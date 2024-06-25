@@ -18,6 +18,9 @@ class BaseUser(BaseModel):
     picture: HttpUrl
     email: EmailStr
 
+    class ConfigDict:
+        from_attributes = True
+
 class UserDB(BaseUser):
     id: str
 
