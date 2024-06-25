@@ -19,13 +19,11 @@ credentials_exception = HTTPException(
 
 unauthorized_redirect = RedirectResponse(
     'http://localhost:5173',
-    # status_code=status.HTTP_401_UNAUTHORIZED,
     headers={'Content-Type': 'text/html; charset=utf-8'}
 )
 
 def get_authorized_redirect(bearer_token: str):
     return RedirectResponse(
-        # f'http://localhost:5173?token={bearer_token}',
         f'http://localhost:5173/login?token={bearer_token}',
         headers={'Content-Type': 'text/html; charset=utf-8'}
     )

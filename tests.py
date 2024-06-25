@@ -28,5 +28,4 @@ def test_get_user():
         "email": "john.doe@example.com"
     }
     
-    # Clean up the dependency override
     del app.dependency_overrides[get_current_user]
