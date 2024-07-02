@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, HttpUrl, EmailStr, field_validator
 from typing import Literal
 from datetime import date, timedelta
+from app.enums import RifaStatus
 
 class TokenData(BaseModel):
     sub: str
@@ -35,7 +36,6 @@ class RifaBase(BaseModel):
     nome: str
     descricao: str | None
     preco_bilhete: float = Field(gt=0, le=100)
-    status: Literal['Disponível', 'Cancelada', 'Encerrada']
     premio_nome: str
     premio_imagem: str
     data_sorteio: date
@@ -55,6 +55,7 @@ class RifaBase(BaseModel):
 
 class RifaInfo(RifaBase):
     rifa_id: int
+    status: RifaStatus
     quant_bilhetes: int
     quant_comprados: int
     quant_restantes: int

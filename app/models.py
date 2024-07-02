@@ -13,6 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from app.enums import RifaStatus
 
 Base = declarative_base()
 
@@ -45,7 +46,7 @@ class Rifa(Base):
     criador_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     nome = Column(String(30), nullable=False)
     descricao = Column(Text)
-    status = Column(Integer, nullable=False)
+    status = Column(Integer, nullable=False, default=RifaStatus.DISPONIVEL.value)
     preco_bilhete = Column(Float, nullable=False)
     premio_nome = Column(String(50), nullable=False)
     premio_imagem = Column(String, nullable=False)
