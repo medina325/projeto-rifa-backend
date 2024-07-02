@@ -79,7 +79,8 @@ async def get_token_callback(
     
     jwt_token = create_access_token(
         user_db.id,
-        timedelta(seconds=user_response.token_response.expires_in)
+        # timedelta(seconds=user_response.token_response.expires_in)
+        timedelta(hours=10) # NOTE Para poder testar as telas em paz - remover depois
     )
     
     return get_authorized_redirect(jwt_token)
