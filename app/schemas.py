@@ -1,5 +1,6 @@
-from pydantic import BaseModel, HttpUrl, EmailStr
+from pydantic import BaseModel, Field, HttpUrl, EmailStr, field_validator
 from typing import Literal
+from datetime import date, timedelta
 
 class TokenData(BaseModel):
     sub: str
@@ -29,3 +30,43 @@ class GoogleUserInfoResponse(BaseUser):
     email_verified: bool
     auth_provider: Literal['google'] = 'google'
     token_response: GoogleTokenResponse
+
+class RifaBase(BaseModel):
+    nome: str
+    descricao: str | None
+    preco_bilhete: float = Field(gt=0, le=100)
+    status: Literal['Disponível', 'Cancelada', 'Encerrada']
+    premio_nome: str
+    premio_imagem: str
+    data_sorteio: date
+
+    @field_validator('data_sorteio')
+    def check_date_is_not_in_the_past(cls, v: date) -> date:
+        if v < date.today():
+            raise ValueError('A data não pode estar no passado')
+        return v
+
+    @field_validator('data_sorteio')
+    def check_date_is_not_more_than_a_month_ahead(cls, v: date) -> date:
+        threshold_date = date.today() + timedelta(weeks=4)
+        if v > threshold_date:
+            raise ValueError('A data não pode estar mais de uma mês no futuro')
+        return v
+
+class RifaInfo(RifaBase):
+    rifa_id: int
+    quant_bilhetes: int
+    quant_comprados: int
+    quant_restantes: int
+
+# NOTE Criar config para esse parametro aqui
+MIN_BILHETES_COUNT = 10
+
+class RifaCreate(RifaBase):
+    quant_bilhetes: int = Field(
+        ge=MIN_BILHETES_COUNT,
+        description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
+    )
+
+class RifaUpdate():
+    pass
