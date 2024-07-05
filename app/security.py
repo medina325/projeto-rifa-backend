@@ -1,7 +1,7 @@
 import jwt
 import datetime
 from datetime import datetime as datetime_m, timedelta
-from app.config import SECRET_KEY
+from app.config import get_env_var
 from sqlalchemy.orm import Session
 from app.models import RevokedToken, User
 from app.schemas import TokenData
@@ -10,6 +10,7 @@ from fastapi.responses import RedirectResponse
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = get_env_var('SECRET_KEY')
 
 credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
