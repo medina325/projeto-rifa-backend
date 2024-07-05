@@ -1,8 +1,10 @@
 from fastapi import FastAPI
-from app.routers import oauth2, users, rifas
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.routers import oauth2, users, rifas
 
 app = FastAPI()
+app.mount("/files", StaticFiles(directory="files"), name="files")
 
 app.include_router(oauth2.router, prefix='/oauth', tags=['oauth'])
 app.include_router(users.router, prefix='/users', tags=['users'])
