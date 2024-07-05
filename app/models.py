@@ -51,6 +51,7 @@ class Rifa(Base):
     premio_nome = Column(String(50), nullable=False)
     premio_imagem = Column(String, nullable=False)
     data_sorteio = Column(Date, nullable=False)
+    quant_bilhetes = Column(Integer, nullable=False)
     
     criador = relationship("User")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
@@ -60,24 +61,13 @@ class Comprador(Base):
     __tablename__ = 'compradores'
     
     comprador_id = Column(Integer, primary_key=True)
+    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
+
     nome = Column(String(80), nullable=False)
     numero_celular = Column(String(11), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
 
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
-
-class Bilhete(Base):
-    __tablename__ = 'bilhetes'
-    
-    bilhete_id = Column(Integer, primary_key=True)
-    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
-    comprador_id = Column(Integer, ForeignKey('compradores.comprador_id'))
-    vendido = Column(Boolean, nullable=False, default=False)
-    
     rifa = relationship("Rifa")
-    comprador = relationship("Comprador")
-    
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
@@ -85,7 +75,7 @@ class Pagamento(Base):
     __tablename__ = 'pagamentos'
     
     pagamento_id = Column(Integer, primary_key=True)
-    bilhete_id = Column(Integer, ForeignKey('bilhetes.bilhete_id'), unique=True, nullable=False)
+    comprador_id = Column(Integer, ForeignKey('compradores.comprador_id'), unique=True, nullable=False)
     valor = Column(Float, nullable=False)
 
     # NOTE Adicionar outras colunas necessárias após descobrir como adicionar pagamento
