@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.config import get_env_var
 from app.models import Rifa, User
 from app.database import get_db
-from app.schemas import RifaCreate, RifaInfo
+from app.schemas import RifaCreate, RifaInfo, RifaInDB
 from app.dependencies import get_rifa, get_current_user, get_user_rifas
 # NOTE rifas/v2 imports
 from fastapi import Form, UploadFile, Request, HTTPException
@@ -71,7 +71,7 @@ async def create_rifa(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> RifaInDB:
     file_id = str(uuid.uuid4())
     file_extension = Path(premio_imagem.filename).suffix
     file_name = f"{file_id}{file_extension}"
@@ -99,10 +99,7 @@ async def create_rifa(
         with file_path.open("wb") as f:
             f.write(await premio_imagem.read())
         
-        return {
-            'filename': premio_imagem.filename,
-            **rifa_pydantic
-        }
+        return db_rifa
     except Exception as e:
         db.rollback()
         if file_path.is_file():
