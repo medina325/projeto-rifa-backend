@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import oauth2, users, rifas
+from app.routers import oauth2, users, rifas, compradores
 
 app = FastAPI()
 app.mount("/files", StaticFiles(directory="files"), name="files")
@@ -9,6 +9,8 @@ app.mount("/files", StaticFiles(directory="files"), name="files")
 app.include_router(oauth2.router, prefix='/oauth', tags=['oauth'])
 app.include_router(users.router, prefix='/users', tags=['users'])
 app.include_router(rifas.router, prefix='/rifas', tags=['rifas'])
+app.include_router(compradores.router, prefix='/compradores', tags=['compradores'])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['http://localhost:5173'],

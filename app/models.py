@@ -6,17 +6,17 @@ from sqlalchemy import (
     Date,
     Float,
     DateTime,
-    Boolean,
     Text,
     ForeignKey,
-    func
+    func,
+    select
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, column_property
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 from app.enums import RifaStatus
 
 Base = declarative_base()
-
 
 class User(Base):
     __tablename__ = "users"
@@ -38,6 +38,20 @@ class RevokedToken(Base):
 
     token = Column(String, primary_key=True, index=True)
     revoked_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+class Comprador(Base):
+    __tablename__ = 'compradores'
+    
+    comprador_id = Column(Integer, primary_key=True)
+    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
+
+    nome = Column(String(80), nullable=False)
+    numero_celular = Column(String(11), nullable=False)
+    email = Column(String(255), nullable=False)
+
+    rifa = relationship("Rifa")
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
 class Rifa(Base):
     __tablename__ = 'rifas'
@@ -57,19 +71,16 @@ class Rifa(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
-class Comprador(Base):
-    __tablename__ = 'compradores'
+    @hybrid_property
+    def quant_restantes(self):
+        return self.quant_bilhetes - self.quant_comprados
     
-    comprador_id = Column(Integer, primary_key=True)
-    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
-
-    nome = Column(String(80), nullable=False)
-    numero_celular = Column(String(11), nullable=False)
-    email = Column(String(255), unique=True, nullable=False)
-
-    rifa = relationship("Rifa")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    quant_comprados = column_property(
+        select(func.count(Comprador.comprador_id))
+        .where(Comprador.rifa_id == rifa_id)
+        .correlate_except(Comprador)
+        .scalar_subquery()
+    )
 
 class Pagamento(Base):
     __tablename__ = 'pagamentos'
