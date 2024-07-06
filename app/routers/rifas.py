@@ -1,18 +1,16 @@
 import logging
-from fastapi import APIRouter, Depends
+import uuid
+import os
+from fastapi import APIRouter, Depends, Form, UploadFile, Request, HTTPException
 from typing import Annotated
+from datetime import date
+from pathlib import Path
 from sqlalchemy.orm import Session
 from app.config import get_env_var
 from app.models import Rifa, User
 from app.database import get_db
 from app.schemas import RifaCreate, RifaInfo, RifaInDB
 from app.dependencies import get_rifa, get_current_user, get_user_rifas
-# NOTE rifas/v2 imports
-from fastapi import Form, UploadFile, Request, HTTPException
-from datetime import date
-from pathlib import Path
-import uuid
-import os
 
 UPLOAD_DIRECTORY = Path("files")
 UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -22,40 +20,7 @@ MAX_BILHETES_COUNT = get_env_var('MAX_BILHETES_COUNT')
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("/", status_code=201)
-def create_rifa(
-    rifa: RifaCreate,
-    user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-) -> RifaInfo:
-    
-    db_rifa = Rifa(**rifa.model_dump(exclude='premio_imagem'))
-    db_rifa.criador = user
-    db.add(db_rifa)
-    db.commit()
-    db.refresh(db_rifa)
-
-    return db_rifa
-
-# TODO -- ainda não finalizado
-@router.post('/upload_prize_image', status_code=201, dependencies=[Depends(get_current_user)])
-async def upload_prize_images(
-    rifa_id: Annotated[int, Form()],
-    file_name: Annotated[str, Form()],
-    premio_imagem: UploadFile,
-    db: Annotated[Session, Depends(get_db)],
-):
-    rifa = db.query(Rifa).filter(Rifa.rifa_id == rifa_id).first()
-    if not rifa:
-        raise HTTPException(status_code=404, detail='Não há rifa a ser relacionada com o arquivo')
-    file_path = UPLOAD_DIRECTORY / file_name
-    with file_path.open("wb") as f:
-        f.write(await premio_imagem.read())
-    return {
-        'filename': file_path
-    }
-
-@router.post('/v2', status_code=201)
+@router.post('/', status_code=201)
 async def create_rifa(
     nome: Annotated[str, Form(max_length=30)],
     descricao: Annotated[str | None, Form()],
@@ -71,7 +36,7 @@ async def create_rifa(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> RifaInDB:
+) -> RifaInfo:
     file_id = str(uuid.uuid4())
     file_extension = Path(premio_imagem.filename).suffix
     file_name = f"{file_id}{file_extension}"
@@ -84,12 +49,13 @@ async def create_rifa(
             descricao=descricao,
             preco_bilhete=preco_bilhete,
             premio_nome=premio_nome,
-            premio_imagem=str(file_url),
+            premio_imagem=str(file_path),
             data_sorteio=data_sorteio,
             quant_bilhetes=quant_bilhetes,
         )
         db_rifa = Rifa(
-            **rifa_pydantic.model_dump(),
+            **rifa_pydantic.model_dump(exclude='premio_imagem'),
+            premio_imagem=str(file_url),
             criador_id=user.id
         )
         

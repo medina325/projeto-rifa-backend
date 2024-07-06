@@ -35,83 +35,50 @@ class GoogleUserInfoResponse(BaseUser):
 
 MIN_BILHETES_COUNT = get_env_var('MIN_BILHETES_COUNT')
 
-class RifaInDB(BaseModel):
-    rifa_id: int
+class RifaBase(BaseModel):
     nome: str
-    descricao: str | None
-    status: RifaStatus
+    descricao: str | None = None
+    status: RifaStatus = RifaStatus.DISPONIVEL.value
+    status: Literal[1,2,3] = RifaStatus.DISPONIVEL.value
     preco_bilhete: float = Field(gt=0, le=100)
     premio_nome: str
     premio_imagem: str
     data_sorteio: date
+
+    @field_validator('data_sorteio')
+    def check_date_is_not_in_the_past(cls, v: date) -> date:
+        if v < date.today():
+            raise ValueError('A data não pode estar no passado')
+        return v
+
+    @field_validator('data_sorteio')
+    def check_date_is_not_more_than_a_month_ahead(cls, v: date) -> date:
+        threshold_date = date.today() + timedelta(weeks=4)
+        if v > threshold_date:
+            raise ValueError('A data não pode estar mais de um mês no futuro')
+        return v
+
+
+class RifaInDB(RifaBase):
+    rifa_id: int
     quant_bilhetes: int
 
-    @field_validator('data_sorteio')
-    def check_date_is_not_in_the_past(cls, v: date) -> date:
-        if v < date.today():
-            raise ValueError('A data não pode estar no passado')
-        return v
-
-    @field_validator('data_sorteio')
-    def check_date_is_not_more_than_a_month_ahead(cls, v: date) -> date:
-        threshold_date = date.today() + timedelta(weeks=4)
-        if v > threshold_date:
-            raise ValueError('A data não pode estar mais de uma mês no futuro')
-        return v
-
-class RifaInfo(BaseModel):
+class RifaInfo(RifaBase):
     rifa_id: int
-    nome: str
-    descricao: str | None
-    status: RifaStatus
-    preco_bilhete: float = Field(gt=0, le=100)
-    premio_nome: str
-    premio_imagem: str
-    data_sorteio: date
+    status: str
     quant_bilhetes: int = Field(
         ge=MIN_BILHETES_COUNT,
         description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
     )
-    quant_comprados: int
-    quant_restantes: int
+    quant_comprados: int = 0
+    quant_restantes: int = 0
     
-    @field_validator('data_sorteio')
-    def check_date_is_not_in_the_past(cls, v: date) -> date:
-        if v < date.today():
-            raise ValueError('A data não pode estar no passado')
-        return v
+    @field_validator('status', mode='before')
+    def convert_status(cls, value):
+        return RifaStatus(value).description()
 
-    @field_validator('data_sorteio')
-    def check_date_is_not_more_than_a_month_ahead(cls, v: date) -> date:
-        threshold_date = date.today() + timedelta(weeks=4)
-        if v > threshold_date:
-            raise ValueError('A data não pode estar mais de uma mês no futuro')
-        return v
-
-class RifaCreate(BaseModel):
-    nome: str
-    descricao: str | None
-    preco_bilhete: float = Field(gt=0, le=100)
-    premio_nome: str
-    premio_imagem: str
-    data_sorteio: date
+class RifaCreate(RifaBase):
     quant_bilhetes: int = Field(
         ge=MIN_BILHETES_COUNT,
         description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
     )
-    
-    @field_validator('data_sorteio')
-    def check_date_is_not_in_the_past(cls, v: date) -> date:
-        if v < date.today():
-            raise ValueError('A data não pode estar no passado')
-        return v
-
-    @field_validator('data_sorteio')
-    def check_date_is_not_more_than_a_month_ahead(cls, v: date) -> date:
-        threshold_date = date.today() + timedelta(weeks=4)
-        if v > threshold_date:
-            raise ValueError('A data não pode estar mais de uma mês no futuro')
-        return v
-
-class RifaUpdate():
-    pass

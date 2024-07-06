@@ -1,15 +1,21 @@
 from enum import Enum
 
 class RifaStatus(Enum):
-    DISPONIVEL = (1, "Disponível")
-    CANCELADA = (2, "Cancelada")
-    ENCERRADA = (3, "Encerrada")
-
-    def __new__(cls, value, description):
-        obj = object.__new__(cls)
-        obj._value_ = value
-        obj.description = description
-        return obj
+    DISPONIVEL = 1
+    CANCELADA = 2
+    ENCERRADA = 3
+    
+    @classmethod
+    def has_value(cls, value):
+        return any(value == item.value for item in cls)
 
     def __str__(self):
-        return self.description
+        return self.description()
+    
+    def description(self):
+        if self.name == 'DISPONIVEL':
+            return 'Disponível'
+        elif self.name == 'CANCELADA':
+            return 'Cancelada'
+        elif self.name == 'ENCERRADA':
+            return 'Encerrada'
