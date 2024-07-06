@@ -1,7 +1,8 @@
 import logging
 import uuid
-import os
 from fastapi import APIRouter, Depends, Form, UploadFile, Request, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from typing import Annotated
 from datetime import date
 from pathlib import Path
@@ -9,8 +10,10 @@ from sqlalchemy.orm import Session
 from app.config import get_env_var
 from app.models import Rifa, User
 from app.database import get_db
-from app.schemas import RifaCreate, RifaInfo, RifaInDB
-from app.dependencies import get_rifa, get_current_user, get_user_rifas
+from app.schemas import RifaCreate, RifaInfo
+from app.dependencies import get_current_user
+import app.services.rifa_management_service as rifa_service
+from pydantic import ValidationError
 
 UPLOAD_DIRECTORY = Path("files")
 UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -66,24 +69,47 @@ async def create_rifa(
             f.write(await premio_imagem.read())
         
         return db_rifa
+    except ValidationError as e:
+        rifa_service.clean_failed_rifa_creation(db, file_path)
+
+        return JSONResponse(
+            status_code=422,
+            content=jsonable_encoder({"detail": e.errors()}),
+        )
     except Exception as e:
-        db.rollback()
-        if file_path.is_file():
-            os.remove(file_path)
+        rifa_service.clean_failed_rifa_creation(db, file_path)
+
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/")
 def read_rifas(
-    # db: Annotated[Session, Depends(get_db)],
-    rifas: Annotated[list[Rifa], Depends(get_user_rifas)],
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 3,
 ) -> list[RifaInfo]:
+    db_rifas = db.query(Rifa) \
+        .filter(Rifa.criador_id == user.id) \
+        .offset(skip) \
+        .limit(limit) \
+        .all()
     
-    # Adicionar qnt de bilhetes
-    return rifas
+    if not db_rifas:
+        raise HTTPException(status_code=404, detail="Usuário atual não possui rifas")
+
+    return db_rifas
 
 @router.get('/{rifa_id}', dependencies=[Depends(get_current_user)])
-async def read_rifa(rifa: Annotated[Rifa, Depends(get_rifa)]):
-    return rifa
+async def get_rifa(
+    rifa_id: int,
+    db: Session = Depends(get_db)
+) -> RifaInfo:
+    db_rifa = db.query(Rifa).filter(Rifa.rifa_id == rifa_id).first()
+
+    if not db_rifa:
+        raise HTTPException(status_code=404, detail="Rifa não encontrada")
+    
+    return db_rifa
 
 # @router.put("/{rifa_id}")
 # def update_rifa(

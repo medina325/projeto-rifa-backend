@@ -38,7 +38,6 @@ MIN_BILHETES_COUNT = get_env_var('MIN_BILHETES_COUNT')
 class RifaBase(BaseModel):
     nome: str
     descricao: str | None = None
-    status: RifaStatus = RifaStatus.DISPONIVEL.value
     status: Literal[1,2,3] = RifaStatus.DISPONIVEL.value
     preco_bilhete: float = Field(gt=0, le=100)
     premio_nome: str
@@ -70,8 +69,8 @@ class RifaInfo(RifaBase):
         ge=MIN_BILHETES_COUNT,
         description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
     )
-    quant_comprados: int = 0
-    quant_restantes: int = 0
+    quant_comprados: int
+    quant_restantes: int
     
     @field_validator('status', mode='before')
     def convert_status(cls, value):
