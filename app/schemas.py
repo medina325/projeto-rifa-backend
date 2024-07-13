@@ -92,6 +92,7 @@ class CompradorDB(CompradorCreate):
 
 class BilheteCreate(BaseModel):
     rifa_id: int
+    numero: int
     preco: float = Field(gt=0, le=100, description='O preço não pode ser menor ou igual a 0, ou maior que R$100,00')
 
 class BilheteDB(BilheteCreate):

@@ -58,6 +58,7 @@ class Bilhete(Base):
     rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
     comprador_id = Column(Integer, ForeignKey('compradores.comprador_id'), nullable=False)
 
+    numero = Column(Integer, nullable=False)
     preco = Column(Float, nullable=False)
 
     rifa = relationship("Rifa")
