@@ -81,3 +81,23 @@ class RifaCreate(RifaBase):
         ge=MIN_BILHETES_COUNT,
         description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
     )
+
+class CompradorCreate(BaseModel):
+    nome: str = Field(max_length=80)
+    numero_celular: str = Field(max_length=11)
+    email: EmailStr
+
+class CompradorDB(CompradorCreate):
+    comprador_id: int
+
+class BilheteCreate(BaseModel):
+    rifa_id: int
+    preco: float = Field(gt=0, le=100, description='O preço não pode ser menor ou igual a 0, ou maior que R$100,00')
+
+class BilheteDB(BilheteCreate):
+    bilhete_id: int
+    comprador_id: int
+
+class BilheteComprador(BaseModel):
+    bilhetes: list[BilheteCreate]
+    comprador: CompradorDB

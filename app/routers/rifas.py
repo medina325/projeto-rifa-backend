@@ -8,11 +8,12 @@ from datetime import date
 from pathlib import Path
 from sqlalchemy.orm import Session
 from app.config import get_env_var
-from app.models import Rifa, User
+from app.models import Rifa, User, Comprador, Bilhete
 from app.database import get_db
-from app.schemas import RifaCreate, RifaInfo
+from app.schemas import RifaCreate, RifaInfo, BilheteCreate, CompradorCreate, BilheteComprador
 from app.dependencies import get_current_user
 import app.services.rifa_management_service as rifa_service
+import app.services.comprador_management_service as comprador_service
 from pydantic import ValidationError
 
 UPLOAD_DIRECTORY = Path("files")
@@ -95,7 +96,7 @@ def read_rifas(
         .all()
     
     if not db_rifas:
-        raise HTTPException(status_code=404, detail="Usuário atual não possui rifas")
+        raise HTTPException(status_code=404, detail="Nenhuma rifa encontrada")
 
     return db_rifas
 
@@ -131,3 +132,34 @@ def delete_rifa(
     db.delete(rifa)
     db.commit()
     return rifa
+
+@router.post('/buy_bilhetes', status_code=200)
+async def buy_bilhetes(
+    comprador: CompradorCreate,
+    bilhetes: list[BilheteCreate],
+    db: Annotated[Session, Depends(get_db)],
+) -> BilheteComprador:
+    db_comprador = comprador_service.find_comprador(db, comprador)
+
+    try:
+        if not db_comprador:
+            db_comprador = Comprador(**comprador.model_dump())
+            db.add(db_comprador)
+            db.commit()
+            db.refresh(db_comprador)
+
+        db_bilhetes = [
+            Bilhete(**bilhete.model_dump(), comprador_id=db_comprador.comprador_id)
+            for bilhete in bilhetes
+        ]
+        
+        db.add_all(db_bilhetes)
+        db.commit()
+        
+        return {
+            'bilhetes': db_bilhetes,
+            'comprador': db_comprador
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

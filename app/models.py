@@ -43,21 +43,34 @@ class Comprador(Base):
     __tablename__ = 'compradores'
     
     comprador_id = Column(Integer, primary_key=True)
-    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
 
     nome = Column(String(80), nullable=False)
     numero_celular = Column(String(11), nullable=False)
     email = Column(String(255), nullable=False)
 
-    rifa = relationship("Rifa")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+class Bilhete(Base):
+    __tablename__ = 'bilhetes'
+
+    bilhete_id = Column(Integer, primary_key=True)
+    rifa_id = Column(Integer, ForeignKey('rifas.rifa_id'), nullable=False)
+    comprador_id = Column(Integer, ForeignKey('compradores.comprador_id'), nullable=False)
+
+    preco = Column(Float, nullable=False)
+
+    rifa = relationship("Rifa")
+    comprador = relationship("Comprador")
+
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), nullable=False)
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), nullable=False)
 
 class Rifa(Base):
     __tablename__ = 'rifas'
     
     rifa_id = Column(Integer, primary_key=True)
-    criador_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    criador_id = Column(String(30), ForeignKey('users.id'), nullable=False)
     nome = Column(String(30), nullable=False)
     descricao = Column(Text)
     status = Column(Integer, nullable=False, default=RifaStatus.DISPONIVEL.value)
@@ -76,9 +89,9 @@ class Rifa(Base):
         return self.quant_bilhetes - self.quant_comprados
     
     quant_comprados = column_property(
-        select(func.count(Comprador.comprador_id))
-        .where(Comprador.rifa_id == rifa_id)
-        .correlate_except(Comprador)
+        select(func.count(Bilhete.comprador_id))
+        .where(Bilhete.rifa_id == rifa_id)
+        .correlate_except(Bilhete)
         .scalar_subquery()
     )
 
