@@ -5,7 +5,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import ValidationError
-from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from app.config import get_env_var
 from app.database import get_db
 from app.dependencies import oauth2_google_scheme
 from app.schemas import GoogleTokenResponse, GoogleUserInfoResponse, UserDB
@@ -20,6 +20,9 @@ from app.security import (
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+GOOGLE_CLIENT_ID = get_env_var('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = get_env_var('GOOGLE_CLIENT_SECRET')
 
 async def fetch_token(code: str, request: Request) -> GoogleTokenResponse | None:
     async with httpx.AsyncClient() as client:
@@ -79,7 +82,8 @@ async def get_token_callback(
     
     jwt_token = create_access_token(
         user_db.id,
-        timedelta(seconds=user_response.token_response.expires_in)
+        # timedelta(seconds=user_response.token_response.expires_in)
+        timedelta(hours=10) # NOTE Para poder testar as telas em paz - remover depois
     )
     
     return get_authorized_redirect(jwt_token)

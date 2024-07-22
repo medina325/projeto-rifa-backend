@@ -1,8 +1,9 @@
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from fastapi import Depends
+from fastapi import Depends, HTTPException
+from typing import Annotated
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User
+from app.models import User, Rifa
 from app.security import (
     is_token_valid,
     get_user_from_token,
