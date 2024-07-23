@@ -5,6 +5,7 @@ Revises:
 Create Date: 2024-06-16 14:53:53.675168
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -29,8 +30,15 @@ def upgrade() -> None:
         sa.Column('last_name', sa.String(255), nullable=False),
         sa.Column('picture', sa.String(255)),
         sa.Column('auth_provider', sa.String(50)),
-        sa.Column('created_at', sa.TIMESTAMP, server_default=sa.func.current_timestamp()),
-        sa.Column('updated_at', sa.TIMESTAMP, server_default=sa.func.current_timestamp(), onupdate=sa.func.current_timestamp()),
+        sa.Column(
+            'created_at', sa.TIMESTAMP, server_default=sa.func.current_timestamp()
+        ),
+        sa.Column(
+            'updated_at',
+            sa.TIMESTAMP,
+            server_default=sa.func.current_timestamp(),
+            onupdate=sa.func.current_timestamp(),
+        ),
     )
 
 

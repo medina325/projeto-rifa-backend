@@ -5,6 +5,7 @@ from app.models import User, RevokedToken
 
 logger = logging.getLogger(__name__)
 
+
 def insert_user_into_db(user_data: UserDB, db: Session):
     user = User(
         id=user_data.id,
@@ -14,7 +15,7 @@ def insert_user_into_db(user_data: UserDB, db: Session):
         last_name=user_data.family_name,
         picture=str(user_data.picture),
     )
-    
+
     try:
         db.add(user)
         db.commit()
@@ -23,6 +24,7 @@ def insert_user_into_db(user_data: UserDB, db: Session):
         logger.error(f"Failed to create user: {e}")
         db.rollback()
         raise
+
 
 def logout_user_jwt(token: str, db: Session):
     try:
