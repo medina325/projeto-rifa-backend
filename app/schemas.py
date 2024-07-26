@@ -4,15 +4,18 @@ from datetime import date, timedelta
 from app.config import get_env_var
 from app.enums import RifaStatus
 
+
 class TokenData(BaseModel):
     sub: str
     exp: float
+
 
 class GoogleTokenResponse(BaseModel):
     access_token: str
     expires_in: int
     token_type: Literal['Bearer']
     scope: str | None = None
+
 
 class BaseUser(BaseModel):
     name: str
@@ -24,8 +27,10 @@ class BaseUser(BaseModel):
     class ConfigDict:
         from_attributes = True
 
+
 class UserDB(BaseUser):
     id: str
+
 
 class GoogleUserInfoResponse(BaseUser):
     sub: str
@@ -33,12 +38,14 @@ class GoogleUserInfoResponse(BaseUser):
     auth_provider: Literal['google'] = 'google'
     token_response: GoogleTokenResponse
 
+
 MIN_BILHETES_COUNT = get_env_var('MIN_BILHETES_COUNT')
+
 
 class RifaBase(BaseModel):
     nome: str
     descricao: str | None = None
-    status: Literal[1,2,3] = RifaStatus.DISPONIVEL.value
+    status: Literal[1, 2, 3] = RifaStatus.DISPONIVEL.value
     preco_bilhete: float = Field(gt=0, le=100)
     premio_nome: str
     premio_imagem: str
@@ -62,42 +69,53 @@ class RifaInDB(RifaBase):
     rifa_id: int
     quant_bilhetes: int
 
+
 class RifaInfo(RifaBase):
     rifa_id: int
     status: str
     quant_bilhetes: int = Field(
         ge=MIN_BILHETES_COUNT,
-        description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
+        description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes',
     )
     quant_comprados: int
     quant_restantes: int
-    
+
     @field_validator('status', mode='before')
     def convert_status(cls, value):
         return RifaStatus(value).description()
 
+
 class RifaCreate(RifaBase):
     quant_bilhetes: int = Field(
         ge=MIN_BILHETES_COUNT,
-        description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes'
+        description=f'A rifa deve ter no mínimo {MIN_BILHETES_COUNT} bilhetes',
     )
+
 
 class CompradorCreate(BaseModel):
     nome: str = Field(max_length=80)
     numero_celular: str = Field(max_length=11)
     email: EmailStr
 
+
 class CompradorDB(CompradorCreate):
     comprador_id: int
+
 
 class BilheteCreate(BaseModel):
     rifa_id: int
     numero: int
-    preco: float = Field(gt=0, le=100, description='O preço não pode ser menor ou igual a 0, ou maior que R$100,00')
+    preco: float = Field(
+        gt=0,
+        le=100,
+        description='O preço não pode ser menor ou igual a 0, ou maior que R$100,00',
+    )
+
 
 class BilheteDB(BilheteCreate):
     bilhete_id: int
     comprador_id: int
+
 
 class BilheteComprador(BaseModel):
     bilhetes: list[BilheteCreate]

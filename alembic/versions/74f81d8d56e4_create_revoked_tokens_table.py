@@ -5,6 +5,7 @@ Revises: aa2e2a2f7255
 Create Date: 2024-06-16 14:56:32.516793
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -22,7 +23,9 @@ def upgrade() -> None:
     op.create_table(
         'revoked_tokens',
         sa.Column('token', sa.String, primary_key=True, index=True),
-        sa.Column('revoked_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            'revoked_at', sa.DateTime(timezone=True), server_default=sa.func.now()
+        ),
     )
 
 

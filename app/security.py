@@ -19,54 +19,49 @@ credentials_exception = HTTPException(
 )
 
 unauthorized_redirect = RedirectResponse(
-    'http://localhost:5173',
-    headers={'Content-Type': 'text/html; charset=utf-8'}
+    'http://localhost:5173', headers={'Content-Type': 'text/html; charset=utf-8'}
 )
+
 
 def get_authorized_redirect(bearer_token: str):
     return RedirectResponse(
         f'http://localhost:5173/login?token={bearer_token}',
-        headers={'Content-Type': 'text/html; charset=utf-8'}
+        headers={'Content-Type': 'text/html; charset=utf-8'},
     )
+
 
 def user_exists(db: Session, _id: str):
     return db.query(User).filter(User.id == _id).first() is not None
 
-def create_access_token(
-    sub: str,
-    expires_delta: timedelta = timedelta(minutes=15)
-):
+
+def create_access_token(sub: str, expires_delta: timedelta = timedelta(minutes=15)):
     expire_date = datetime_m.now(datetime.timezone.utc) + expires_delta
-    encoded_jwt = jwt.encode({
-        'sub': sub,
-        'exp': expire_date.timestamp()    
-    }, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        {'sub': sub, 'exp': expire_date.timestamp()}, SECRET_KEY, algorithm=ALGORITHM
+    )
     return encoded_jwt
+
 
 def decode_token(token: str) -> TokenData:
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     return TokenData(**payload)
 
+
 def get_user_from_token(db: Session, token: str) -> User:
     token_data = decode_token(token)
-    return (
-        db.query(User)
-        .filter(User.id == token_data.sub)
-        .first()
-    )
-    
+    return db.query(User).filter(User.id == token_data.sub).first()
+
+
 def is_token_not_expired(token: str) -> bool:
     token_data = decode_token(token)
     current_timespamp = datetime_m.now(datetime.timezone.utc).timestamp()
     return token_data.exp > current_timespamp
 
+
 def is_token_not_revoked(db: Session, token: str) -> bool:
-    revoked_token = (
-        db.query(RevokedToken)
-        .filter(RevokedToken.token == token)
-        .first()
-    )
+    revoked_token = db.query(RevokedToken).filter(RevokedToken.token == token).first()
     return revoked_token is None
+
 
 def is_token_valid(token: str, db: Session) -> bool:
     try:
