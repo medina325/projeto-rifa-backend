@@ -10,13 +10,7 @@ from app.database import get_db
 from app.dependencies import oauth2_google_scheme
 from app.schemas import GoogleTokenResponse, GoogleUserInfoResponse, UserDB
 from app.services import user_management_service
-from app.security import (
-    unauthorized_redirect,
-    user_exists,
-    create_access_token,
-    get_authorized_redirect,
-    is_token_valid,
-)
+import app.security as security
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -74,22 +68,28 @@ async def get_token_callback(
     user_response: GoogleUserInfoResponse | None = Depends(fetch_user_info),
 ):
     if not user_response:
-        return unauthorized_redirect
+        return security.unauthorized_redirect
 
     user_db = UserDB(
-        id=user_response.sub, username=user_response.name, **user_response.model_dump()
+        id=user_response.sub,
+        username=user_response.name,
+        email=user_response.email,
+        first_name=user_response.given_name,
+        last_name=user_response.family_name,
+        picture=user_response.picture,
+        auth_provider=user_response.auth_provider,
     )
 
-    if not user_exists(db, user_db.id):
+    if not user_management_service.user_exists(db, user_db.id):
         user_management_service.insert_user_into_db(user_db, db)
 
-    jwt_token = create_access_token(
+    jwt_token = security.create_access_token(
         user_db.id,
         # timedelta(seconds=user_response.token_response.expires_in)
         timedelta(hours=10),  # NOTE Para poder testar as telas em paz - remover depois
     )
 
-    return get_authorized_redirect(jwt_token)
+    return security.get_authorized_redirect(jwt_token)
 
 
 @router.post("/logout")
@@ -97,8 +97,4 @@ async def logout(
     token: Annotated[str, Depends(oauth2_google_scheme)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    if not is_token_valid(token, db):
-        return {'Token já foi invalidado'}
-
-    user_management_service.logout_user_jwt(token, db)
-    return {'Usuário deslogado, JWT invalidado'}
+    return security.logout(token, db)
