@@ -10,6 +10,11 @@ class TokenData(BaseModel):
     exp: float
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 class GoogleTokenResponse(BaseModel):
     access_token: str
     expires_in: int
@@ -18,11 +23,13 @@ class GoogleTokenResponse(BaseModel):
 
 
 class BaseUser(BaseModel):
-    name: str
-    given_name: str
-    family_name: str
-    picture: HttpUrl
+    username: str
     email: EmailStr
+    password_hash: str | None = None
+    first_name: str
+    last_name: str
+    picture: HttpUrl | None = None
+    auth_provider: str | None = None
 
     class ConfigDict:
         from_attributes = True
@@ -32,7 +39,21 @@ class UserDB(BaseUser):
     id: str
 
 
-class GoogleUserInfoResponse(BaseUser):
+class RegisterUser(BaseUser):
+    password: str
+
+
+class LoginUser(BaseModel):
+    username: str
+    password: str
+
+
+class GoogleUserInfoResponse(BaseModel):
+    name: str
+    given_name: str
+    family_name: str
+    picture: HttpUrl | None = None
+    email: EmailStr
     sub: str
     email_verified: bool
     auth_provider: Literal['google'] = 'google'
