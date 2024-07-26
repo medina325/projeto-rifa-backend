@@ -1,10 +1,11 @@
+import app.services.user_management_service as user_service
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, Rifa
-from app.security import is_token_valid, get_user_from_token, credentials_exception
+import app.security as security
+from app.models import User
 
 oauth2_google_scheme = OAuth2AuthorizationCodeBearer(
     authorizationUrl="https://accounts.google.com/o/oauth2/auth",
@@ -14,8 +15,9 @@ oauth2_google_scheme = OAuth2AuthorizationCodeBearer(
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_google_scheme), db: Session = Depends(get_db)
+    token: Annotated[str, Depends(oauth2_google_scheme)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    if is_token_valid(token, db):
-        return get_user_from_token(db, token)
-    raise credentials_exception
+    if security.is_token_valid(token, db):
+        return user_service.get_user_from_token(db, token)
+    raise security.credentials_exception
